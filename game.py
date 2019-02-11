@@ -1,7 +1,7 @@
 import random
 
 BOARD_WIDTH  = 10
-BOARD_HEIGHT = 30
+BOARD_HEIGHT = 23
 
 pieceShapes = (
 	[
@@ -126,9 +126,9 @@ class Game(object):
 		self.pieceRotation = 0
 
 		if self.currentPiece <= 1:
-			self.piecePosition = (3, 21)
+			self.piecePosition = (3, 19)
 		else:
-			self.piecePosition = (1, 21)
+			self.piecePosition = (1, 19)
 
 		if self.findCollision():
 			self.lost = True
