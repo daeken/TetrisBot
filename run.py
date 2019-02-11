@@ -4,26 +4,32 @@ from model import model
 import numpy as np
 
 def evaluate(chromosome):
+	v = [chromosome]
+	def eat(length):
+		t = v[0][:length]
+		v[0] = v[0][length:]
+		return t
 	model.layers[0].set_weights([
-		np.reshape(chromosome[:64 * 205], (205, 64)), 
-		chromosome[64 * 205 + 32 * 64 + 4 * 32:64 * 205 + 32 * 64 + 4 * 32 + 64] * 10 - 5
+		np.reshape(eat(15 * 32), (15, 32)), 
+		eat(32)
 	])
 	model.layers[1].set_weights([
-		np.reshape(chromosome[64 * 205:64 * 205 + 32 * 64], (64, 32)), 
-		chromosome[64 * 205 + 32 * 64 + 4 * 32 + 64:64 * 205 + 32 * 64 + 4 * 32 + 64 + 32] * 10 - 5
+		np.reshape(eat(32 * 16), (32, 16)), 
+		eat(16)
 	])
 	model.layers[2].set_weights([
-		np.reshape(chromosome[64 * 205 + 32 * 64:64 * 205 + 32 * 64 + 4 * 32], (32, 4)), 
-		chromosome[64 * 205 + 32 * 64 + 4 * 32 + 64 + 32:64 * 205 + 32 * 64 + 4 * 32 + 64 + 32 + 4] * 10 - 5
+		np.reshape(eat(16 * 4), (16, 4)), 
+		eat(4)
 	])
 
 	game = Game()
 
-	for i in xrange(1000):
+	for i in xrange(10000):
 		if game.lost:
 			break
 
-		inputs = list(reduce(lambda a, x: a + x, ([1 if x else 0 for x in row] for row in game.board[:20])))
+		columns = [[j for j, row in enumerate(game.board) if row[i]][::-1] for i in xrange(10)]
+		inputs = [elem[0] / 22. if len(elem) else 0 for elem in columns]
 		inputs.append(game.piecePosition[0] / 9.)
 		inputs.append(game.piecePosition[1] / 22.)
 		inputs.append(game.pieceRotation / 3.)
@@ -31,10 +37,12 @@ def evaluate(chromosome):
 		inputs.append(game.nextPiece / 6.)
 
 		output = model.predict(np.asarray([np.asarray(inputs)]))[0]
-
+		
 		top = sorted(enumerate(output), key=lambda x: x[1], reverse=True)
 
-		if top[0][0] == 0:
+		if top[0][1] < 0.5 or top[0][1] - top[1][1] < 0.1:
+			game.update()
+		elif top[0][0] == 0:
 			game.update('l')
 		elif top[0][0] == 1:
 			game.update('r')
@@ -46,11 +54,11 @@ def evaluate(chromosome):
 	return game.score
 
 ga = GA(
-	64 * 205 + 32 * 64 + 4 * 32 + 64 + 32 + 4, 
-	256, 
-	999, 
+	32 * 15 + 16 * 32 + 4 * 16 + 32 + 16 + 4, 
+	132, 
+	50, 
 	4, 2, 2, 
-	1000, 0.1, 
+	50, 0.1, 
 	evaluate
 )
 

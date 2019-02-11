@@ -77,6 +77,7 @@ for shape in pieceShapes:
 class Game(object):
 	def __init__(self):
 		self.score = 0
+		self.cleared = 0
 		self.board = [[False] * BOARD_WIDTH for i in xrange(BOARD_HEIGHT)]
 		self.lost = False
 
@@ -119,7 +120,9 @@ class Game(object):
 				if False in self.board[y]:
 					continue
 				self.board = self.board[:y] + self.board[y + 1:] + [[False] * BOARD_WIDTH]
-				self.score += 100
+				self.score += 1000
+				self.cleared += 1
+				print 'Cleared row!', self.cleared
 
 		self.currentPiece = self.nextPiece
 		self.nextPiece = random.randrange(7)
@@ -132,7 +135,7 @@ class Game(object):
 
 		if self.findCollision():
 			self.lost = True
-			self.score -= 1000
+			self.score -= 10000
 
 	def rotate(self, cw):
 		orot = self.pieceRotation

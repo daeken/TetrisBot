@@ -6,7 +6,7 @@ class GA(object):
 		self.length = length
 		self.generation = 0
 		self.genSize = genSize
-		self.batch = [np.random.rand(length) for i in xrange(genSize)]
+		self.batch = [np.random.rand(length) * 2 - 1 for i in xrange(genSize)]
 		self.fitnessHistory = []
 		self.crossoverPoints = crossoverPoints
 		self.topN = topN
@@ -22,17 +22,13 @@ class GA(object):
 		self.fitnessHistory.append((fitness[0][1], sum(x[1] for x in fitness) / len(fitness)))
 
 		sources = [x[0] for x in fitness[:self.topN]] + [x[0] for x in random.sample(fitness[self.topN:], self.randomN)]
-		sources += [np.random.rand(self.length) for i in xrange(self.freshN)]
-		each = self.genSize / len(sources)
+		sources += [np.random.rand(self.length) * 2 - 1 for i in xrange(self.freshN)]
+		each = (self.genSize - self.topN) / len(sources)
 
-		self.batch = []
+		self.batch = sources[:self.topN]
 		for i, source in enumerate(sources):
 			for j in xrange(each):
-				while True:
-					other = random.randrange(len(sources))
-					if other != i:
-						break
-				self.batch.append(self.mutate(self.crossover(source, sources[other])))
+				self.batch.append(self.mutate(self.crossover(source, sources[random.randrange(len(sources))])))
 
 		self.generation += 1
 
@@ -53,5 +49,5 @@ class GA(object):
 	def mutate(self, string):
 		for i in xrange(random.randrange(self.mutationRate)):
 			p = random.randrange(self.length)
-			string[p] = min(max(string[p] + random.uniform(-1, 1) * self.mutationRange, 0), 1)
+			string[p] = min(max(string[p] + random.uniform(-1, 1) * self.mutationRange, -1), 1)
 		return string
