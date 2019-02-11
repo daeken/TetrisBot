@@ -132,6 +132,7 @@ class Game(object):
 
 		if self.findCollision():
 			self.lost = True
+			self.score -= 1000
 
 	def rotate(self, cw):
 		orot = self.pieceRotation

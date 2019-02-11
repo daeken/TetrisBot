@@ -10,8 +10,8 @@ biases: 64 + 32 + 4
 """
 
 model = tf.keras.Sequential()
-model.add(layers.Dense(64, activation='relu', input_dim=10 * 20 + 5))
-model.add(layers.Dense(32, activation='relu'))
-model.add(layers.Dense(4, activation='relu'))
+model.add(layers.Dense(64, activation='sigmoid', input_dim=10 * 20 + 5))
+model.add(layers.Dense(32, activation='sigmoid'))
+model.add(layers.Dense(4, activation='sigmoid'))
 
 model.compile(optimizer=tf.train.AdamOptimizer(0.001), loss='mse', metrics=['mae'])

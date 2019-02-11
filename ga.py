@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 class GA(object):
-	def __init__(self, length, genSize, crossoverPoints, topN, randomN, mutationRate, mutationRange):
+	def __init__(self, length, genSize, crossoverPoints, topN, randomN, freshN, mutationRate, mutationRange, fitness):
 		self.length = length
 		self.generation = 0
 		self.genSize = genSize
@@ -11,8 +11,10 @@ class GA(object):
 		self.crossoverPoints = crossoverPoints
 		self.topN = topN
 		self.randomN = randomN
+		self.freshN = freshN
 		self.mutationRate = mutationRate
 		self.mutationRange = mutationRange
+		self.fitness = fitness
 
 	def next(self):
 		fitness = sorted([(x, self.fitness(x)) for x in self.batch], key=lambda x: x[1], reverse=True)
@@ -20,6 +22,7 @@ class GA(object):
 		self.fitnessHistory.append((fitness[0][1], sum(x[1] for x in fitness) / len(fitness)))
 
 		sources = [x[0] for x in fitness[:self.topN]] + [x[0] for x in random.sample(fitness[self.topN:], self.randomN)]
+		sources += [np.random.rand(self.length) for i in xrange(self.freshN)]
 		each = self.genSize / len(sources)
 
 		self.batch = []
@@ -32,9 +35,6 @@ class GA(object):
 				self.batch.append(self.mutate(self.crossover(source, sources[other])))
 
 		self.generation += 1
-
-	def fitness(self, string):
-		return 0
 
 	def crossover(self, a, b):
 		points = list(sorted(random.sample(range(self.length), self.crossoverPoints)))
