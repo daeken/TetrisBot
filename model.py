@@ -2,16 +2,16 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 """
-inputs: 10 columns with the value being the height of the top, piece x and y (0..1), piece orientation (0, 0.25, 0.5, 1), piece type (0..1), next piece (0..1)
-outputs: left, right, rotate left, rotate right
+inputs:
+	- direction to nearest, lowest, flattest point
+	- portion of piece to land 'flat' (all bottom tiles sitting on others/the base)
+outputs: left/right (-1..1), ccw/cw (-1..1), drop (>=0.9)
 
-weights: 32 * 15 + 16 * 32 + 4 * 16
-biases: 32 + 16 + 4
+weights: 3 * 2
+biases: 3
 """
 
 model = tf.keras.Sequential()
-model.add(layers.Dense(32, activation='tanh', input_dim=10 + 5))
-model.add(layers.Dense(16, activation='tanh'))
-model.add(layers.Dense(4, activation='tanh'))
+model.add(layers.Dense(3, activation='tanh', input_dim=2))
 
 model.compile(optimizer=tf.train.AdamOptimizer(0.001), loss='mse', metrics=['mae'])

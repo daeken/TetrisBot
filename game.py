@@ -88,20 +88,24 @@ class Game(object):
 
 		self.bakePiece()
 
-	def update(self, command=None):
+	def update(self, command=''):
 		def translate(x):
 			ox, oy = self.piecePosition
 			self.piecePosition = ox + x, oy
 			if self.findCollision():
 				self.piecePosition = ox, oy
 
-		if command == 'l':
+		if command.startswith('l'):
+			command = command[1:]
 			translate(-1)
-		elif command == 'r':
+		elif command.startswith('r'):
+			command = command[1:]
 			translate(1)
-		elif command == 'a':
+		if command.startswith('a'):
+			command = command[1:]
 			self.rotate(True)
-		elif command == 's':
+		elif command.startswith('s'):
+			command = command[1:]
 			self.rotate(False)
 
 		ox, oy = self.piecePosition
@@ -109,6 +113,8 @@ class Game(object):
 		if self.findCollision():
 			self.piecePosition = ox, oy
 			self.bakePiece()
+		elif command == 'd':
+			self.update('d')
 
 	def bakePiece(self):
 		if self.currentPiece is not None:
@@ -120,9 +126,8 @@ class Game(object):
 				if False in self.board[y]:
 					continue
 				self.board = self.board[:y] + self.board[y + 1:] + [[False] * BOARD_WIDTH]
-				self.score += 1000
+				self.score += 10
 				self.cleared += 1
-				print 'Cleared row!', self.cleared
 
 		self.currentPiece = self.nextPiece
 		self.nextPiece = random.randrange(7)
@@ -135,7 +140,7 @@ class Game(object):
 
 		if self.findCollision():
 			self.lost = True
-			self.score -= 10000
+			#self.score -= 10000
 
 	def rotate(self, cw):
 		orot = self.pieceRotation
@@ -166,3 +171,58 @@ class Game(object):
 			if x < 0 or x >= BOARD_WIDTH or y < 0 or y >= BOARD_HEIGHT or self.board[y][x]:
 				return True
 		return False
+
+	def calculateFlatLanding(self):
+		pc = {}
+		pp = self.getPiecePieces()
+		left = min(*[px for px, _ in pp])
+		for piece in pp:
+			piece = piece[0], piece[1]
+			if piece[0] not in pc:
+				pc[piece[0]] = piece[1]
+			else:
+				pc[piece[0]] = min(piece[1], pc[piece[0]])
+		if len(pc) == 1:
+			return 1
+		hab = max(*pc.values()) - min(*pc.values())
+		bottom = min(*pc.values())
+		columns = [[j for j, row in enumerate(self.board) if row[i]][::-1] + [-1] if i in pc.keys() else [-1] for i in xrange(10)]
+		
+		tc = max(*map(max, columns))
+		if tc == -1:
+			return 1
+		tpos = [i for i, v in enumerate(columns) if v[0] == tc][0]
+
+		bdelta = pc[tpos] - columns[tpos][0]
+		
+		flat = 0
+		for i, ph in pc.items():
+			column = columns[i]
+			if ph - bdelta == column[0]:
+				flat += 1
+
+		return flat / float(len(pc))
+
+	def findLowestDelta(self):
+		pp = self.getPiecePieces()
+		left = min(*[px for px, _ in pp])
+		ox, oy = self.piecePosition
+		all = []
+		for i in xrange(-10, 10):
+			self.piecePosition = ox + i, oy
+			if self.findCollision():
+				continue
+			flatness = self.calculateFlatLanding()
+			cy = oy
+			while cy >= 0:
+				cy -= 1
+				self.piecePosition = ox + i, cy
+				if self.findCollision():
+					break
+			all.append((i, cy, flatness))
+		self.piecePosition = ox, oy
+		all = sorted(all, key=lambda x: x[2], reverse=True)
+		all = [x[:2] for x in all if x[2] == all[0][2]]
+		all = sorted(all, key=lambda x: x[1])
+		all = sorted((x[0] for x in all if x[1] == all[0][1]), key=abs)
+		return all[0]
